@@ -20,9 +20,10 @@ RECIPES  =	cRecipes/$(MACHTYPE)-$(OSTYPE)/polint.o cRecipes/$(MACHTYPE)-$(OSTYPE
 
 LSTRACK  =	Lstrack/$(MACHTYPE)-$(OSTYPE)/runLStrack.o
 LSFIT  =	Lsfit/$(MACHTYPE)-$(OSTYPE)/readLSTiePoints.o \
+		Lsfit/$(MACHTYPE)-$(OSTYPE)/computeLSFit.o \
 		Lsfit/$(MACHTYPE)-$(OSTYPE)/interpLSTies.o \
 		Lsfit/$(MACHTYPE)-$(OSTYPE)/readLSOffsets.o \
-		Lsfit/$(MACHTYPE)-$(OSTYPE)/computeLSFit.o
+		Lsfit/$(MACHTYPE)-$(OSTYPE)/xyscale.o
 
 STANDARD =	clib/$(MACHTYPE)-$(OSTYPE)/standard.o
 
