@@ -1,4 +1,5 @@
 #include "stdio.h"
+#include "stdlib.h"
 #include "geotiff/xtiffio.h"  /* for TIFF */
 #include "geotiff/geotiffio.h" /* for GeoTIFF */
 #include "lstrack.h"
@@ -66,6 +67,7 @@ static void writeLSOffsets(matchResult *matches,matchParams *matchP)
 {
 	uint32 i;
 	FILE *fp;
+	float successRate;
 	char *file1;
 	size_t  sl;
 	extern int32 nMatch, nAttempt, nTotal;
@@ -103,11 +105,10 @@ static void writeLSOffsets(matchResult *matches,matchParams *matchP)
 	fprintf(fp,"earlyImageJD = %10lf\n",matches->jdEarly);
 	fprintf(fp,"lateImageJD = %10lf\n",matches->jdLate);
 	fprintf(fp,"IntervalBetweenImages = %5i\n",(int)(matches->jdLate-matches->jdEarly));
-	fprintf(fp,"Success_rate_for_attempted_matches(%%) =  %7.2f \n",( (float)nMatch/(float)nAttempt)*100.);
+	if(nAttempt > 0) successRate = ( (float)nMatch/(float)nAttempt)*100.; else successRate=0.0;
+	fprintf(fp,"Success_rate_for_attempted_matches(%%) =  %7.2f \n", successRate);
 	fprintf(fp,"& \n");
 	fclose(fp);
-
-
 }
 
 /*

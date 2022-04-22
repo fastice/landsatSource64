@@ -1,4 +1,5 @@
 #include "stdio.h"
+#include "stdlib.h"
 #include "geotiff/xtiffio.h"  /* for TIFF */
 #include "geotiff/geotiffio.h" /* for GeoTIFF */
 #include "string.h"
