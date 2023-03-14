@@ -31,7 +31,7 @@ static long julday(int mm, int id, int iyyy);
 float **corr;
 fftwf_complex *corrPatchSpace, *corrPatchFreq, *corrPatchOverFreq,*corrPatchOverSpace;
 fftwf_plan forwardCorrPlan, inverseCorrPlan;
-int32 nMatch, nAttempt, nTotal;
+
 
 /************************************ runLStrack ******************************************
 Main routine to do LANDSAT speckle tracking
@@ -97,6 +97,7 @@ matchResult runLStrack(char *earlyFile, char *lateFile, matchParams *matchP )
 	loadTiff(earlyFile,&earlyImage, tifEarly,gtifEarly); matches.jdEarly=earlyImage.jd;
 	loadTiff(lateFile,&lateImage, tifLate,gtifLate); matches.jdLate=lateImage.jd;
 	matchP->deltaT=lateImage.jd - earlyImage.jd;
+	fprintf(stderr, "Dates and deltaT %f %f %f\n", earlyImage.jd, lateImage.jd, matchP->deltaT);
 	/*
 	  Check projection
 	*/
@@ -759,8 +760,7 @@ static void parseLSDate(char *file,LSimage *Image)
         fprintf(stderr,"%s %s \n",file,tmp1);
 	fprintf(stderr,"%i \n",slash);
 	Image->sat=(char *)malloc(4*sizeof(char)); for(i=0; i<3; i++) Image->sat[i]=tmp1[i]; Image->sat[3]='\0';
-
-	tmp1+=3;
+        if( tmp1[2] == '0') tmp1 +=4; else tmp1+=3;
         leadZero=-1;
 	for(i=0; i < 3; i++) { tmp[i]=tmp1[i]; if(leadZero < 0 && tmp[i]=='0') tmp[i]=' '; else leadZero=1; } tmp[3]='\0';
 	sscanf(&tmp[0],"%i",&path); 

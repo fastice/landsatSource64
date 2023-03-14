@@ -10,7 +10,7 @@
 
 static void readArgs(int argc,char *argv[], lsFit *fitDat,char **maskFile);
 static void LSFitusage();
-
+int32 nMatch, nAttempt, nTotal;
 void main(int argc, char *argv[])
 {   	
 	char *tieFile,*matchFile, *fitFile;

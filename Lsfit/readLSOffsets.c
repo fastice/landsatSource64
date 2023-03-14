@@ -212,7 +212,7 @@ static void parseLSOffsetMeta(char *datFile,  lsFit *fitDat,matchResult *matches
 	if(matches->nx <=0) error("ParseLSOffsetMeta: Invalid x0\n");
 	if(matches->nx <=0 ) error("ParseLSOffsetMeta: Invalid y0\n");
 	if(fitDat->deltaT < (NODATA +1)) error("ParseLSOffsetMeta: Invalid deltaT\n");
-	if(fitDat->deltaT <= 0) error("ParseLSOffsetMeta: Invalid proj\n");
+	if(fitDat->proj <= 0) error("ParseLSOffsetMeta: Invalid proj\n");
 	fclose(fp);
 }
 

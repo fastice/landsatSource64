@@ -91,7 +91,6 @@ void computeLSFit( lsFit *fitDat, matchResult *matches, lsTiepoints *tiePoints)
 	nRejectForFit=0;
 	nReject=0;
 	while(notDone == TRUE && nIterations < MAXTIEITERATIONS) {
-	
 		if(fitDat->fitType == PLANEFIT) {
 			svdfit((void *)xy,dx,sigX,tiePoints->npts,aX,ma,u,v,w, &chisq,&planeFit);
 			svdvar(v,ma,w,CmatrixX);
@@ -106,8 +105,6 @@ void computeLSFit( lsFit *fitDat, matchResult *matches, lsTiepoints *tiePoints)
        			fprintf(stderr,"CY_%1i1_%1i2_%1i3 %9.6le %9.6le %9.6le \n",2,2,2,CmatrixY[2][1]*MTOKM, CmatrixY[2][2]*MTOKM*MTOKM,CmatrixY[2][3]*MTOKM*MTOKM);
        			fprintf(stderr,"CY_%1i1_%1i2_%1i3 %9.6le %9.6le %9.6le \n",3,3,3,CmatrixY[3][1]*MTOKM, CmatrixY[3][2]*MTOKM*MTOKM,CmatrixY[3][3]*MTOKM*MTOKM);
 		} else error("computeLSFit: incorrect fit type \n");
-
-
 		/*
 		  Evaluate fit
 		*/	
@@ -137,6 +134,7 @@ void computeLSFit( lsFit *fitDat, matchResult *matches, lsTiepoints *tiePoints)
 		*/
 		nRejectForFit+=nReject; tieCountForFit=	tiePoints->npts; /* save for output stats, so as not to count the last iteration */
 		nReject=0;
+		fprintf(stderr,"%f %f %f %f\n",meanX, meanY, sigmaX, sigmaY);
 		for(i=1; i <= tiePoints->npts; i++) {
 			resX =(dx[i]-(aX[1] +aX[2]*xy[i].x + aX[3]*xy[i].y)) * (matches->dx) /fitDat->deltaT * 365.25;
 			resY =(dy[i]-(aY[1] +aY[2]*xy[i].x +  aY[3]*xy[i].y)) * (matches->dy) /fitDat->deltaT * 365.25;
@@ -151,8 +149,8 @@ void computeLSFit( lsFit *fitDat, matchResult *matches, lsTiepoints *tiePoints)
 			}
 		} /* end for */
 		tiePoints->npts -= nReject;
+		fprintf(stderr, "tiePoints->nPts %i\n", tiePoints->npts);
 		nIterations++;
-		
 	}
 	/*
 	  Evaluate final fit, but keep outliers
