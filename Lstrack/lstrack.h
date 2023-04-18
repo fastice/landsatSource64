@@ -1,3 +1,5 @@
+#include <stdio.h>
+#include <stdint.h>
 /*
   Constants
 */
@@ -37,8 +39,8 @@
 #define MIDTHRESH 1000
 #define SIGMATHRESH 50
 typedef struct {
-	uint32 nx;    	/*  Used to input size of area, defaults whole image */
-	uint32 ny;
+	uint32_t nx;    	/*  Used to input size of area, defaults whole image */
+	uint32_t ny;
 	double x0;
 	double y0;
 	double dx;
@@ -47,8 +49,8 @@ typedef struct {
 } matchMask;
 
 typedef struct {
-	uint32 nx;    	/*  Used to input size of area, defaults whole image */
-	uint32 ny;
+	uint32_t nx;    	/*  Used to input size of area, defaults whole image */
+	uint32_t ny;
 	double x0;
 	double y0;
 	double dx;
@@ -62,17 +64,17 @@ typedef struct {
 	char *maskFile;
 	char *velFile;
 	char *outputFile;
-	int32 slowFlag;
-	int32 proj;
-	uint32 nx;    	/*  Used to input size of area, defaults whole image */
-	uint32 ny;
-	uint32 stepX;
-	uint32 stepY;
-	uint32 deltaX;  /* Offset from origin to start matching at */
-	uint32 deltaY;  /* Offset from origin to start matching at */
-	uint32 searchX; /* Default size of area to search */
-	uint32 searchY;
-	uint32 chipSize;
+	int32_t slowFlag;
+	int32_t proj;
+	uint32_t nx;    	/*  Used to input size of area, defaults whole image */
+	uint32_t ny;
+	uint32_t stepX;
+	uint32_t stepY;
+	uint32_t deltaX;  /* Offset from origin to start matching at */
+	uint32_t deltaY;  /* Offset from origin to start matching at */
+	uint32_t searchX; /* Default size of area to search */
+	uint32_t searchY;
+	uint32_t chipSize;
 	float deltaT;
 	matchMask mask;
 	velMap velocity;
@@ -80,19 +82,19 @@ typedef struct {
 
 typedef struct {
 	char *sat;
-	int32 path;
-	int32 row;
-	int32 year;
-	int32 doy;
+	int32_t path;
+	int32_t row;
+	int32_t year;
+	int32_t doy;
 	double jd;
-	uint32 nx;
-	uint32 ny;
+	uint32_t nx;
+	uint32_t ny;
 	double x0;
 	double y0;
 	double dx;
 	double dy;
-	int32 proj;
-	uint16 **image;
+	int32_t proj;
+	uint16_t **image;
 	float **fimage;
 } LSimage;
 
@@ -101,22 +103,22 @@ typedef struct {
 	char *fileLate; 
 	double jdEarly;
 	double jdLate;
-	uint32 nx;
-	uint32 ny;
+	uint32_t nx;
+	uint32_t ny;
 	double x0;
 	double y0;
 	double dx;
 	double dy;
 	double meanSigmaX;
 	double meanSigmaY;
-	int32 stepX;
-	int32 stepY;
+	int32_t stepX;
+	int32_t stepY;
 	float **X;
 	float **Y;
 	float **sigmaX;
 	float **sigmaY;
 	float **Rho;
-	uint8 **type;
+	uint8_t **type;
 } matchResult;
 
 

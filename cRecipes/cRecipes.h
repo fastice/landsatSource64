@@ -1,4 +1,4 @@
-#include "/Users/ian/progs/GIT/landsatSource64/clib/standard.h"
+#include "landsatSource64/clib/standard.h"
 
 typedef float real;
 

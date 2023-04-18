@@ -19,7 +19,7 @@ typedef struct {
 	double *offYT;
 	double *xyScale;
 	double deltaT;
-	int32 npts;
+	int32_t npts;
 } lsTiepoints;
 #define MAXFITPARAM 3
 typedef struct {
@@ -27,8 +27,8 @@ typedef struct {
 	char *matchFile;
 	char *fitFile;
 	unsigned int fitType;
-	int32 slowFlag;
-	int32 proj;
+	int32_t slowFlag;
+	int32_t proj;
 	double deltaT;
 	double pX[MAXFITPARAM];
 	double pY[MAXFITPARAM];
@@ -41,9 +41,9 @@ typedef struct {
    Functions
 */
 void readLSTiePoints(char *tieFile, lsTiepoints *tiePoints);
-void readLSOffsets(lsFit *fitDat, matchResult *matches,int32 readData,char *mask);
+void readLSOffsets(lsFit *fitDat, matchResult *matches,int32_t readData,char *mask);
 char *stripWS(char *string);
 void interpLSTies( lsFit *fitDat, matchResult *matches, lsTiepoints *tiePoints);
 void parseKeyValue(char *line,char *keyword,char *value);
-double xyscale(double latctr,int32 proj);
+double xyscale(double latctr,int32_t proj);
 void computeLSFit( lsFit *fitDat, matchResult *matches, lsTiepoints *tiePoints);

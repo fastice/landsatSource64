@@ -2,19 +2,19 @@
 #include "stdarg.h"
 #include "string.h"
 #include "standard.h"
-#include "geotiff/xtiffio.h"  /* for TIFF */
+/*#include "geotiff/xtiffio.h"   for TIFF */
 #include <stdlib.h>
 /* #include <libkern/OSByteOrder.h> */
 #
-#define SWAP_SHORT(Var)  Var = *(short*)         SwapEndian((void*)&Var, sizeof(short))
-#define SWAP_USHORT(Var) Var = *(unsigned short*)SwapEndian((void*)&Var, sizeof(short))
-#define SWAP_INT32(Var)   Var = *(int32*)          SwapEndian((void*)&Var, sizeof(int32))
-#define SWAP_ULONG(Var)  Var = *(uint32*) SwapEndian((void*)&Var, sizeof(uint32))
-#define SWAP_RGB(Var)    Var = *(int*)           SwapEndian((void*)&Var, 3)
-#define SWAP_FLOAT(Var)  Var = *(float*)         SwapEndian((void*)&Var, sizeof(float))
-#define SWAP_DOUBLE(Var) Var = *(double*)        SwapEndian((void*)&Var, sizeof(double))
+#define SWAP_SHORT(Var)  Var = *(int16_t*) SwapEndian((void*)&Var, sizeof(int16_t))
+#define SWAP_USHORT(Var) Var = *(uint16_t*) SwapEndian((void*)&Var, sizeof(uint16_t))
+#define SWAP_INT32(Var)   Var = *(int32_t*) SwapEndian((void*)&Var, sizeof(int32_t))
+#define SWAP_ULONG(Var)  Var = *(uint32_t*) SwapEndian((void*)&Var, sizeof(uint32_t))
+#define SWAP_RGB(Var)    Var = *(int32_t*) SwapEndian((void*)&Var, 3)
+#define SWAP_FLOAT(Var)  Var = *(float*) SwapEndian((void*)&Var, sizeof(float))
+#define SWAP_DOUBLE(Var) Var = *(double*) SwapEndian((void*)&Var, sizeof(double))
 
-extern void *SwapEndian(void* Addr, const int Nb);
+extern void *SwapEndian(void* Addr, const int32_t Nb);
 
 /* 
     Useful procedures that can be used for all programs
@@ -54,7 +54,7 @@ extern void *SwapEndian(void* Addr, const int Nb);
 
 /* getline:  read a line, return length.  From K&R */
 
-    int getlineobsolete(char *line, int imax)
+    int32_t getlineobsolete(char *line, int32_t imax)
 {
     if(fgets(line,imax,stdin) == NULL)
         return 0;
@@ -64,7 +64,7 @@ extern void *SwapEndian(void* Addr, const int Nb);
  
 /* fgetline:  read a line from a file, return length. */
 
-    int fgetline(FILE *fp, char *line, int imax)
+    int32_t fgetline(FILE *fp, char *line, int32_t imax)
 {
     if( feof(fp) == EOF ) error("%s","fgetline -- EOF encountered");
     if( ferror(fp) != 0 ) error("%s","fgetline -- file error");
@@ -81,9 +81,9 @@ extern void *SwapEndian(void* Addr, const int Nb);
    where n = number of column. Return line count
 */
 
-   int goToBeginningOfData(FILE *fp, int lineCount, int *ncolumns)
+   int32_t goToBeginningOfData(FILE *fp, int32_t lineCount, int32_t *ncolumns)
 {
-    int lineLength;  
+    int32_t lineLength;  
     char line[LINEMAX];
     char *string;
 
@@ -110,11 +110,11 @@ extern void *SwapEndian(void* Addr, const int Nb);
   If end of data eod = TRUE else eod = FALSE.
 */
 
-   int getDataString(FILE *fp, int lineCount, char *line,int *eod)
+   int32_t getDataString(FILE *fp, int32_t lineCount, char *line,int32_t *eod)
 {
-    int lineLength;  
-    int ncolumns;    
-    int count;
+    int32_t lineLength;  
+    int32_t ncolumns;    
+    int32_t count;
     count = 0;
     while( TRUE ) {  /* Loop to read lines */
  
@@ -141,10 +141,10 @@ extern void *SwapEndian(void* Addr, const int Nb);
 
 /* Search through file for next occurence of ENDDATA */
 
-   int goToEndOfData(FILE *fp, int lineCount, int *ndata)
+   int32_t goToEndOfData(FILE *fp, int32_t lineCount, int32_t *ndata)
 {
-    int lineLength;  
-    int ncolumns;
+    int32_t lineLength;  
+    int32_t ncolumns;
     char line[LINEMAX];
 
     while( TRUE ) {  /* Loop to read lines */
@@ -160,10 +160,10 @@ extern void *SwapEndian(void* Addr, const int Nb);
 
 /* Search through file for next occurence of ENDDATA */
 
-   int goToNextStringOccurence(FILE *fp, int lineCount, char *string,char *line)
+   int32_t goToNextStringOccurence(FILE *fp, int32_t lineCount, char *string,char *line)
 {
-    int lineLength;  
-    int ncolumns;
+    int32_t lineLength;  
+    int32_t ncolumns;
 
     while( TRUE ) {  /* Loop to read lines */
         lineLength = fgetline(fp,line,LINEMAX); /* Read line */
@@ -189,12 +189,12 @@ extern void *SwapEndian(void* Addr, const int Nb);
 /*
   Read raw data and byteswap if needed
 */ 
-  size_t freadBS(void *ptr, size_t nitems, size_t size, FILE *fp,int flags)
+  size_t freadBS(void *ptr, size_t nitems, size_t size, FILE *fp, int32_t flags)
 {
-  int16  *ptr16;
+  int16_t  *ptr16;
   long long i;
   size_t retVal;
-  uint32 *ptrLong;
+  uint32_t *ptrLong;
   size_t n;
   /* Use fread to read the data as requested */
    retVal=fread(ptr,nitems,size,fp);
@@ -212,20 +212,20 @@ extern void *SwapEndian(void* Addr, const int Nb);
  */
    if(flags==FLOAT32FLAG) {
       n=(nitems*size)/sizeof(float);
-      ptrLong=(uint32 *)ptr;
+      ptrLong=(uint32_t *)ptr;
       for(i=0; i < n; i++) ptrLong[i]=SWAP_ULONG(ptrLong[i]);
       return(retVal);
    }
 
    if(flags==INT32FLAG) {
       n=(nitems*size)/sizeof(long int);
-      ptrLong=(uint32 *)ptr;
+      ptrLong=(uint32_t *)ptr;
       for(i=0; i < n; i++) ptrLong[i]=SWAP_ULONG(ptrLong[i]);
       return(retVal);
    }
    if(flags==INT16FLAG) {
       n=(nitems*size)/sizeof(short int);
-      ptr16=(short int *)ptr;
+      ptr16=(int16_t *)ptr;
       for(i=0; i < n; i++) ptr16[i]=SWAP_USHORT(ptr16[i]);
       return(retVal);
    }
@@ -246,21 +246,21 @@ extern void *SwapEndian(void* Addr, const int Nb);
  */
    if(flags==FLOAT32FLAG) {
 
-      n=(nitems*size)/sizeof(uint32);
-      ptrLong=(uint32 *)ptr;
+      n=(nitems*size)/sizeof(uint32_t);
+      ptrLong=(uint32_t *)ptr;
       for(i=0; i < n; i++) ptrLong[i]=SWAP_ULONG(ptrLong[i]);
       return(retVal);
    }
 
    if(flags==INT32FLAG) {
-      n=(nitems*size)/sizeof(uint32);
-      ptrLong=(uint32 *)ptr;
+      n=(nitems*size)/sizeof(uint32_t);
+      ptrLong=(uint32_t*)ptr;
       for(i=0; i < n; i++) ptrLong[i]=SWAP_ULONG(ptrLong[i]);
       return(retVal);
    }
    if(flags==INT16FLAG) {
-      n=(nitems*size)/sizeof(int16);
-      ptr16=(int16 *)ptr;
+      n=(nitems*size)/sizeof(int16_t);
+      ptr16=(int16_t*)ptr;
       for(i=0; i < n; i++) ptr16[i]=SWAP_USHORT(ptr16[i]);
       return(retVal);
    }
@@ -280,17 +280,17 @@ extern void *SwapEndian(void* Addr, const int Nb);
 #endif 
 #endif
 #endif
-
+return 0;
 }
 /*
   Read raw data and byteswap if needed
 */ 
-  size_t fwriteBS(void *ptr, size_t nitems, size_t size, FILE *fp,int flags)
+  size_t fwriteBS(void *ptr, size_t nitems, size_t size, FILE *fp,int32_t flags)
 {
-  uint16 *ptr16;
+  uint16_t *ptr16;
   long long i;
   size_t retVal;
-  uint32 *ptrLong;
+  uint32_t *ptrLong;
   size_t n;
 /*
     ++++++++++++++++++++++++++++++start i386++++++++++++++++++++++++++++++++++++++++
@@ -301,19 +301,19 @@ extern void *SwapEndian(void* Addr, const int Nb);
  */
    if(flags==FLOAT32FLAG) {
       n=(nitems*size)/sizeof(float);
-      ptrLong=(int32 *)ptr;
+      ptrLong=(int32_t *)ptr;
       for(i=0; i < n; i++) ptrLong[i]=SWAP_ULONG(ptrLong[i]);
    }
 
    if(flags==INT32FLAG) {
       n=(nitems*size)/sizeof(int32);
-      ptrLong=(int32 *)ptr;
+      ptrLong=(int32_t *)ptr;
       for(i=0; i < n; i++) ptrLong[i]=SWAP_ULONG(ptrLong[i]);
    }
 
    if(flags==INT16FLAG) {
-      n=(nitems*size)/sizeof(short int);
-      ptr16=(short int *)ptr;
+      n=(nitems*size)/sizeof(int16_t);
+      ptr16=(int16_t *)ptr;
       for(i=0; i < n; i++) ptr16[i]=SWAP_USHORT(ptr16[i]);
    }
 
@@ -325,19 +325,19 @@ extern void *SwapEndian(void* Addr, const int Nb);
  */
    if(flags==FLOAT32FLAG) {
       n=(nitems*size)/sizeof(float);
-      ptrLong=(uint32 *)ptr;
+      ptrLong=(uint32_t *)ptr;
       for(i=0; i < n; i++) ptrLong[i]=SWAP_ULONG(ptrLong[i]);
    }
 
    if(flags==INT32FLAG) {
-      n=(nitems*size)/sizeof(int32);
-      ptrLong=(uint32 *)ptr;
+      n=(nitems*size)/sizeof(int32_t);
+      ptrLong=(uint32_t *)ptr;
       for(i=0; i < n; i++) ptrLong[i]=SWAP_ULONG(ptrLong[i]);
    }
 
    if(flags==INT16FLAG) {
-      n=(nitems*size)/sizeof(short int);
-      ptr16=(uint16 *)ptr;
+      n=(nitems*size)/sizeof(int16_t);
+      ptr16=(uint16_t *)ptr;
       for(i=0; i < n; i++) ptr16[i]=SWAP_USHORT(ptr16[i]);
    }
 
@@ -379,7 +379,7 @@ extern void *SwapEndian(void* Addr, const int Nb);
 
 static long _TestEndian=1;
 
-int IsLittleEndian(void) {
+int32_t IsLittleEndian(void) {
 	return *(char*)&_TestEndian;
 }
 
@@ -389,7 +389,7 @@ int IsLittleEndian(void) {
   EXAMPLE: float F=123.456;; SWAP_FLOAT(F);
 ******************************************************************************/
 
-void *SwapEndian(void* Addr, const int Nb) {
+void *SwapEndian(void* Addr, const int32_t Nb) {
 	static char Swapped[16];
 	switch (Nb) {
 		case 2:	Swapped[0]=*((char*)Addr+1);

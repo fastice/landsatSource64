@@ -27,45 +27,43 @@
     Include file for library of standard routines
 */
 
-
-
 /* Print error and exit */
    void error( char *fmt, ... );     
 
 /* Print warning and write to log file if *fp !=NULL */
-   void warning( FILE *fp,char *fmt, ... );     
+   void warning( FILE *fp, char *fmt, ... );     
 
 /* getline: read a line, return length */
-   int getlineobsolete(char *line, int imax);  
+   int32_t getlineobsolete(char *line, int32_t imax);  
 
 /* fgetline: read a line from file, return length */
-   int fgetline(FILE *fp, char *line, int imax);  
+   int32_t fgetline(FILE *fp, char *line, int32_t imax);  
 
 /* 
    Search through file for next occurence of BEGINNINGOFDATA n, 
    where n = number of columns. Return line count.
 */
 
-   int goToBeginningOfData(FILE *fp, int lineCount, int *ncolumns);
+   int32_t goToBeginningOfData(FILE *fp, int32_t lineCount, int32_t *ncolumns);
 
 
 /* Search through file for next occurence of ENDOFDATA */
 
-   int goToEndOfData(FILE *fp, int lineCount, int *ndata);
+   int32_t goToEndOfData(FILE *fp, int32_t lineCount, int32_t *ndata);
 
 /* Open file for input, exit if error occurs */
    FILE *openInputFile(char *filename);
 /* 
    Go to next occurence of "string" in file, return negative if EOF.
 */
- int goToNextStringOccurence(FILE *fp, int lineCount,char *string,char *line);
+ int32_t goToNextStringOccurence(FILE *fp, int32_t lineCount, char *string, char *line);
 /* 
   Read through file returning data strings.
   If end of data eod = TRUE else eod = FALSE.
 */
-   int getDataString(FILE *fp, int lineCount, char *line,int *eod);
+   int32_t getDataString(FILE *fp, int32_t lineCount, char *line,int32_t *eod);
 /*
   Read/write raw data and byteswap if needed
 */ 
-  size_t freadBS(void * ptr, size_t nitems, size_t size, FILE *fp,int flags);
-  size_t fwriteBS(void * ptr, size_t nitems, size_t size, FILE *fp,int flags);
+  size_t freadBS(void * ptr, size_t nitems, size_t size, FILE *fp, int32_t flags);
+  size_t fwriteBS(void * ptr, size_t nitems, size_t size, FILE *fp, int32_t flags);

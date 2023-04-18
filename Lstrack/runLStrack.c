@@ -15,23 +15,24 @@
 static  void loadTiff(char *file,LSimage *Image,TIFF *tif,GTIF *gtif); /* Read tiff files in and apply high-pass filter */
 static void writeTiffAsRaw(LSimage *Image,char *file);  /* Used for debugging - dump image buffers */
 static void mallocMatch(matchResult *matches) ;    /* Memory allocation  */
-
-static int32 getLatePosition(LSimage *earlyImage,LSimage *lateImage,matchParams *matchP,uint32 ie,uint32 je,uint32 *il,uint32 *jl,int32 *chipSize,int32 *lx1, int32 *lx2,int32 *ly1,int32 *ly2) ;
-static float fastCorr(LSimage *earlyImage,LSimage *lateImage,int32 chipSize,int32 ie,int32 je, int32 il, int32 jl, int32 lx1, int32 lx2,int32 ly1,int32 ly2,float *offX,float *offY);
+static int32 getLatePosition(LSimage *earlyImage,LSimage *lateImage,matchParams *matchP,
+	uint32 ie,uint32 je,uint32 *il,uint32 *jl,int32 *chipSize,int32 *lx1, int32 *lx2,int32 *ly1,int32 *ly2) ;
+static float fastCorr(LSimage *earlyImage,LSimage *lateImage,int32 chipSize,int32 ie,int32 je, int32 il, 
+	int32 jl, int32 lx1, int32 lx2,int32 ly1,int32 ly2,float *offX,float *offY);
 static unsigned char isMasked(double x, double y, matchParams *matchP);
-static unsigned char velGuess(double x, double y, matchParams *matchP, double dx,double dy, int32  *iVel, int32 *jVel, int32 *slow, int *highStrain) ;
+static unsigned char velGuess(double x, double y, matchParams *matchP, double dx,double dy, int32  *iVel, int32 *jVel,
+	 int32 *slow, int32_t *highStrain) ;
 static float **lsmatrix(int32 nrl, int32 nrh, int32 ncl, int32 nch)	;
 static float overSamplePeakCorr(int32 iMax, int32 jMax, float *offX, float *offY);
 static void parseLSDate(char *file,LSimage *Image);
-static long julday(int mm, int id, int iyyy);
+static long julday(int32_t mm, int32_t id, int32_t iyyy);
 
 /*
   Globals for FFTW and corelation
 */
 float **corr;
-fftwf_complex *corrPatchSpace, *corrPatchFreq, *corrPatchOverFreq,*corrPatchOverSpace;
+fftwf_complex *corrPatchSpace, *corrPatchFreq, *corrPatchOverFreq, *corrPatchOverSpace;
 fftwf_plan forwardCorrPlan, inverseCorrPlan;
-
 
 /************************************ runLStrack ******************************************
 Main routine to do LANDSAT speckle tracking
@@ -44,7 +45,7 @@ matchResult runLStrack(char *earlyFile, char *lateFile, matchParams *matchP )
 	extern int32 nMatch, nAttempt, nTotal;
 
 	TIFF *tifEarly=(TIFF*)0, *tifLate=(TIFF*)0 ; 	 /* TIFF-level descriptor */
-	GTIF *gtifEarly=(GTIF*)0,*gtifLate=(GTIF*)0;	 /* GeoKey-level descriptor */
+	GTIF *gtifEarly=(GTIF*)0, *gtifLate=(GTIF*)0;	 /* GeoKey-level descriptor */
 	LSimage earlyImage, lateImage; 			/* tiff images after being read in */
 	matchResult matches;						/* match result */
 	uint32 idum,idum1;					        /* Dummy variables */
@@ -56,14 +57,14 @@ matchResult runLStrack(char *earlyFile, char *lateFile, matchParams *matchP )
 	double x,y;								/* Current position being tracked */
 	int32 slow, highStrain; 								/* Set when velocity map indicates chip can be increased and search region reduced */
 	int32 chipSize;							/* Chipsize */
-	int32 lx1,ly1,lx2,ly2,k,k1,iVel,jVel; 					/* Search region  */   
-	float offX,offY;							/* Returned offsets - i.e, final result */
+	int32 lx1, ly1, lx2, ly2, k, k1, iVel, jVel; 					/* Search region  */   
+	float offX, offY;							/* Returned offsets - i.e, final result */
 	uint32 edgeBuf;							/* "margin" around edges - i.e., don't use data within edgebuf of image edges */
-	int width,widthO;							/* wdith of corrPatch, and oversampled version corrPatchOver */
+	int32_t width, widthO;							/* wdith of corrPatch, and oversampled version corrPatchOver */
 	float pixelCorr;							/* Returned correlation value */
 	time_t currTime, startTime;					/* Used for timer */
-	FILE *fpDebug, *fpDebug1,*fpDebug2;     		 /* Debug variabiles */
-	float **tmp,*tmp1, **tmpa,*tmp1a, fdum[1];      /* Debug variabiles */
+	FILE *fpDebug, *fpDebug1, *fpDebug2;     		 /* Debug variabiles */
+	float **tmp, *tmp1, **tmpa, *tmp1a, fdum[1];      /* Debug variabiles */
 	FILE *fp;
 	uint32 countS,countM,countF; 
 	/*debug 
@@ -102,16 +103,20 @@ matchResult runLStrack(char *earlyFile, char *lateFile, matchParams *matchP )
 	  Check projection
 	*/
 	if(matchP->proj == NSIDCSOUTH || matchP->proj == NSIDCNORTH) {
-		if(earlyImage.proj < 0) earlyImage.proj=matchP->proj; 
-		else if(earlyImage.proj != matchP->proj) error("cmd line proj %i inconsistent with %s %i\n",matchP->proj,earlyFile,earlyImage.proj);
-		if(lateImage.proj < 0) lateImage.proj=matchP->proj; 
-		else if(lateImage.proj != matchP->proj) error("cmd line proj %i inconsistent with %s %i\n",matchP->proj,lateFile,lateImage.proj);
-        } else  {
-		fprintf(stderr,"EPSG 1/2 %i %i\n",earlyImage.proj ,lateImage.proj );
-		if(earlyImage.proj == NSIDCSOUTH || earlyImage.proj == NSIDCNORTH) matchP->proj=earlyImage.proj;
-                else if(lateImage.proj == NSIDCSOUTH || lateImage.proj == NSIDCNORTH) matchP->proj=lateImage.proj;
+		/* Early proj */
+		if(earlyImage.proj < 0) earlyImage.proj = matchP->proj; 
+		else if(earlyImage.proj != matchP->proj) 
+			error("cmd line proj %i inconsistent with %s %i\n",matchP->proj,earlyFile,earlyImage.proj);
+		/* late proj*/
+		if(lateImage.proj < 0) lateImage.proj = matchP->proj; 
+		else if(lateImage.proj != matchP->proj) 
+			error("cmd line proj %i inconsistent with %s %i\n",matchP->proj,lateFile,lateImage.proj);
+    } else {
+			fprintf(stderr,"EPSG 1/2 %i %i\n", earlyImage.proj, lateImage.proj);
+			if(earlyImage.proj == NSIDCSOUTH || earlyImage.proj == NSIDCNORTH) matchP->proj = earlyImage.proj;
+            else if(lateImage.proj == NSIDCSOUTH || lateImage.proj == NSIDCNORTH) matchP->proj = lateImage.proj;	
 	}
- 	if(matchP->proj !=NSIDCSOUTH && matchP->proj != NSIDCNORTH && matchP->proj != NULLPROJ  ) error("Invalid Projection either not set in tiff or cmd line %i \n",matchP->proj);
+ 	if(matchP->proj !=NSIDCSOUTH && matchP->proj != NSIDCNORTH && matchP->proj != NULLPROJ) error("Invalid Projection either not set in tiff or cmd line %i \n",matchP->proj);
 	fprintf(stderr,"Match EPSG %i\n",matchP->proj);
 	fprintf(stderr,"Time To Load Image %f \n",(float)(time(NULL)-startTime)  ); currTime=time(NULL);
 	/*
@@ -119,29 +124,45 @@ matchResult runLStrack(char *earlyFile, char *lateFile, matchParams *matchP )
 	*/
 	minX=max(earlyImage.x0,lateImage.x0);       minY=max(earlyImage.y0,lateImage.y0);
 	/* Ensure origin for stepping is integer number of pixels in first image */
-	if(minX != earlyImage.x0) {idum=(uint32)((minX-earlyImage.x0)/earlyImage.dx); minX=earlyImage.x0 + idum * earlyImage.dx;}
-	if(minY != earlyImage.y0) {idum=(uint32)((minY-earlyImage.y0)/earlyImage.dy); minY=earlyImage.y0 + idum * earlyImage.dy;}
+	if(minX != earlyImage.x0) {
+		idum=(uint32)((minX-earlyImage.x0)/earlyImage.dx); minX=earlyImage.x0 + idum * earlyImage.dx;	
+	}
+	if(minY != earlyImage.y0) {
+		idum=(uint32)((minY-earlyImage.y0)/earlyImage.dy); minY=earlyImage.y0 + idum * earlyImage.dy;
+	}
 	matches.x0=minX+matchP->deltaX * earlyImage.dx;  
 	matches.y0=minY+matchP->deltaY * earlyImage.dy; 
 	matches.dx=earlyImage.dx; matches.dy=earlyImage.dy;
 	matches.stepX=matchP->stepX; 	matches.stepY=matchP->stepY;
-        if( fabs(earlyImage.dx-lateImage.dx) > 0.0001  || fabs(earlyImage.dy-lateImage.dy) > 0.0001) {
-		error ("Image pixel sizes differ %10.5f %10.5f %10.5f %10.5\n",earlyImage.dx,earlyImage.dy,lateImage.dx,lateImage.dy);}
+    if( fabs(earlyImage.dx-lateImage.dx) > 0.0001  || fabs(earlyImage.dy-lateImage.dy) > 0.0001) {
+		error ("Image pixel sizes differ %10.5f %10.5f %10.5f %10.5\n", earlyImage.dx, earlyImage.dy,
+				lateImage.dx,lateImage.dy);
+	}
 	/*
 	  Compute max dimensions
 	*/
-	maxX=min(earlyImage.x0+earlyImage.nx*earlyImage.dx,lateImage.x0+lateImage.nx*lateImage.dx);
-	maxY=min(earlyImage.y0+earlyImage.ny*earlyImage.dy,lateImage.y0+lateImage.ny*lateImage.dy);
+	maxX=min(earlyImage.x0 + earlyImage.nx*earlyImage.dx, lateImage.x0 + lateImage.nx*lateImage.dx);
+	maxY=min(earlyImage.y0 + earlyImage.ny*earlyImage.dy, lateImage.y0 + lateImage.ny*lateImage.dy);
 	/*
 	  Compute total number of matches to do in x and y directions
 	*/
-	nX=(uint32)((maxX-matches.x0)/earlyImage.dx) -edgeBuf; nX=nX/matchP->stepX; /*  pixels, then steps  */
-	nY=(uint32)((maxY-matches.y0)/earlyImage.dy) -edgeBuf; nY=nY/matchP->stepY;
+	nX=(uint32)((maxX-matches.x0)/earlyImage.dx) -e dgeBuf; 
+	nX=nX/matchP->stepX; /*  pixels, then steps  */
+	nY=(uint32)((maxY-matches.y0)/earlyImage.dy) - edgeBuf; 
+	nY=nY/matchP->stepY;
 	fprintf(stderr,"nX,nY %lf %lf  nx,ny %i %i	\n",nX,nY,matchP->nx,matchP->ny);
 	
-	if( (matchP->nx) <=0) {	matches.nx=(uint32)nX;    } else {   	matches.nx=min(nX,matches.nx); }/* Use specified values if less than calcuated */
-	if((matchP->ny) <=0) {	matches.ny=(uint32)nY;      } else {  	matches.ny=min(nY,matches.ny); }
+	if( (matchP->nx) <=0) {	
+		matches.nx=(uint32)nX;    
+	} else {   	
+		matches.nx=min(nX,matches.nx); 
+	}/* Use specified values if less than calcuated */
 
+	if((matchP->ny) <=0) {	
+		matches.ny=(uint32)nY;
+	} else {
+		matches.ny=min(nY,matches.ny); 
+	
 	fprintf(stderr,"%lf %lf %lf %lf \n \n",minX,maxX,minY,maxY);
 	fprintf(stderr,"nX,nY %lf %lf  nx,ny %i %i	\n",nX,nY,matchP->nx,matchP->ny);
 	fprintf(stderr,"%f %f\n",(maxX-matches.x0),((maxX-matches.x0)/earlyImage.dx) );
@@ -156,10 +177,9 @@ matchResult runLStrack(char *earlyFile, char *lateFile, matchParams *matchP )
 	*/
 	ie=(uint32)( (matches.y0-earlyImage.y0)/earlyImage.dy + 0.5);	
 	for(im=0; im < matches.ny; im++) {
-		je=(uint32)( (matches.x0-earlyImage.x0)/earlyImage.dx + 0.5); /* Compute first pixel - note j=x, i=y, always index i,j */
-		y=earlyImage.y0+ie*earlyImage.dy;
+		je = (uint32)( (matches.x0-earlyImage.x0)/earlyImage.dx + 0.5); /* Compute first pixel - note j=x, i=y, always index i,j */
+		y = earlyImage.y0 + ie*earlyImage.dy;
 		for(jm=0; jm < matches.nx; jm++) {
-
 			matches.Rho[im][jm]=-1.0;    matches.X[im][jm]=NODATA;	matches.Y[im][jm]=NODATA; matches.type[im][jm]=0;
 			nTotal++;
 			x=earlyImage.x0+je*earlyImage.dx;
@@ -194,8 +214,10 @@ matchResult runLStrack(char *earlyFile, char *lateFile, matchParams *matchP )
 					matches.type[im][jm] |= FASTVEL;
 					countM++;
 				 }
-			} else {	matches.type[im][jm] |= FASTVEL; countF++;  }
-			
+			} else {	
+				matches.type[im][jm] |= FASTVEL; 
+				countF++; 
+		    }
 			/*
 			  Run correlator.
 			*/
@@ -246,7 +268,7 @@ static unsigned char isMasked(double x, double y, matchParams *matchP)
 /******************************* velGuess  ***************************************
 Guess at offset from velocity
 *************************************** ****************************************/	
-static unsigned char velGuess(double x, double y, matchParams *matchP, double dx,double dy, int32  *iVel, int32 *jVel,int32 *slow,int *highStrain) 
+static unsigned char velGuess(double x, double y, matchParams *matchP, double dx,double dy, int32  *iVel, int32 *jVel,int32 *slow,int32_t *highStrain) 
 {
 	int32 im,jm,i,j;
 	double vxPt,vyPt, t,u,xi,yi;
@@ -330,7 +352,8 @@ static unsigned char velGuess(double x, double y, matchParams *matchP, double dx
 do correlation in space domain on integer pixels, then oversample peak by factor NOVER
 returns peak correlation value and *offX and *offY  
 *************************************** ****************************************/	
-static float fastCorr(LSimage *earlyImage,LSimage *lateImage,int32 chipSize,int32 ie,int32 je, int32 il, int32 jl, int32 lx1, int32 lx2,int32 ly1,int32 ly2,float *offX,float *offY)	
+static float fastCorr(LSimage *earlyImage, LSimage *lateImage, int32 chipSize, int32 ie, int32 je, 
+					  int32 il, int32 jl, int32 lx1, int32 lx2,int32 ly1, int32 ly2, float *offX, float *offY)	
 {
 	int32 i,j; /* Outer loop to move search window */
 	int32 ii,jj,iiMin,iiMax,jjMin,jjMax;
@@ -382,9 +405,11 @@ static float fastCorr(LSimage *earlyImage,LSimage *lateImage,int32 chipSize,int3
 			/* Inner correlation loop */
 			for(ii=iiMin; ii <=iiMax; ii++) {
 				for(jj=jjMin; jj <=jjMax; jj++) {
-					Xcorr+=  (double)earlyImage->fimage[ie+i+ii][je+j+jj]  *     (double)lateImage->fimage[il+ii][jl+jj];
-					varE+=   ((double)earlyImage->fimage[ie+i+ii][je+j+jj]) *  ((double)earlyImage->fimage[ie+i+ii][je+j+jj]);
-					meanE+=(double)earlyImage->fimage[ie+i+ii][je+j+jj];
+					Xcorr += (double)earlyImage->fimage[ie+i+ii][je+j+jj] * 
+						(double)lateImage->fimage[il+ii][jl+jj];
+					varE += ((double)earlyImage->fimage[ie+i+ii][je+j+jj]) * 
+						((double)earlyImage->fimage[ie+i+ii][je+j+jj]);
+					meanE += (double)earlyImage->fimage[ie+i+ii][je+j+jj];
 				}
 			} /* end inner correlation */
 			varE=varE/npts; meanE=meanE/npts; sigmaE2=varE-meanE*meanE; /* Normalize variables */
@@ -450,7 +475,7 @@ static float fastCorr(LSimage *earlyImage,LSimage *lateImage,int32 chipSize,int3
 	/*
 	  Oversample correlation (returns maxCorrHi, and offX, offY)
 	*/
-	maxCorrHi=overSamplePeakCorr(iMax,jMax, offX,offY);
+	maxCorrHi=overSamplePeakCorr(iMax, jMax, offX, offY);
 	/*
 	  In theory late-image patch slides over early image, but they way its implemented above, the early image slides under the late patch.
 	  As a consequence the signs are flipped. This undoes the sign flip.
@@ -496,7 +521,11 @@ static float overSamplePeakCorr(int32 iMax, int32 jMax, float *offX, float *offY
 	/*
 	  Reject for low correlation AND poor peak.
 	 */
-	if( (sqrt(corr[iMax][jMax]) < RHOTHRESHFINAL) && (sqrt(corr[iMax][jMax])/Crms < 9.0)) {*offX=NODATA; *offY=NODATA; return(NOCORR);}
+	if( (sqrt(corr[iMax][jMax]) < RHOTHRESHFINAL) && (sqrt(corr[iMax][jMax])/Crms < 9.0)) {
+		*offX=NODATA; *offY=NODATA;
+		return(NOCORR);
+	}
+
 	/* DEBUG */
 	/*
 	 *offY=Crms; *offX=sqrt(corr[iMax][jMax])/Crms;
@@ -514,15 +543,15 @@ static float overSamplePeakCorr(int32 iMax, int32 jMax, float *offX, float *offY
 		i2=OSSIZE + i;
 		j1=widthO- OSSIZE;
 		j2=OSSIZE;
-		for(j=0; j < OSSIZE; j++ ) {
-			corrPatchOverFreq[i*widthO + j][0]   = corrPatchFreq[i*width   + j][0]; 
-			corrPatchOverFreq[i*widthO + j][1]   = corrPatchFreq[i*width   + j][1];
-			corrPatchOverFreq[i1*widthO+j][0]   = corrPatchFreq[i2*width + j][0];
-			corrPatchOverFreq[i1*widthO+j][1]   = corrPatchFreq[i2*width + j][1];
+		for(j=0; j < OSSIZE; j++) {
+			corrPatchOverFreq[i*widthO + j][0] = corrPatchFreq[i*width + j][0]; 
+			corrPatchOverFreq[i*widthO + j][1] = corrPatchFreq[i*width + j][1];
+			corrPatchOverFreq[i1*widthO+j][0] = corrPatchFreq[i2*width + j][0];
+			corrPatchOverFreq[i1*widthO+j][1] = corrPatchFreq[i2*width + j][1];
 			corrPatchOverFreq[i1*widthO+j1][0] = corrPatchFreq[i2*width + j2][0];
 			corrPatchOverFreq[i1*widthO+j1][1] = corrPatchFreq[i2*width + j2][1];
-			corrPatchOverFreq[i*widthO + j1][0] = corrPatchFreq[i*width   + j2][0];
-			corrPatchOverFreq[i*widthO + j1][1] = corrPatchFreq[i*width   + j2][1];
+			corrPatchOverFreq[i*widthO + j1][0] = corrPatchFreq[i*width + j2][0];
+			corrPatchOverFreq[i*widthO + j1][1] = corrPatchFreq[i*width + j2][1];
 			j1++; j2++;
 		} /* End for j */
 	} /* End for i */
@@ -617,10 +646,7 @@ void loadTiff(char *file,LSimage *Image,TIFF *tif,GTIF *gtif)
 	*/
 	TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &idum); Image->nx=idum;
 	TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &idum); Image->ny=idum;
-
-
 	fprintf(stderr,"Image %s width/length %i %i\n",file,Image->nx, Image->ny);
-
 	/*
 	  Get lower left corner
 	*/
@@ -733,8 +759,14 @@ void loadTiff(char *file,LSimage *Image,TIFF *tif,GTIF *gtif)
 		}
 	}
 	/* Edges */	     
-	for(i=0; i < Image->ny; i++)  for(j=0; j < nk; j++)  { Image->fimage[i][j]=(float) NODATA; Image->fimage[i][Image->nx-j-1]=(float) NODATA;}
-	for(j=0; j < Image->nx; j++)  for(i=0; i < nk; i++) { Image->fimage[i][j]= (float) NODATA;Image->fimage[Image->ny-i-1][j]=(float) NODATA;}
+	for(i=0; i < Image->ny; i++)  for(j=0; j < nk; j++)  { 
+		Image->fimage[i][j]=(float) NODATA; Image->fimage[i][Image->nx-j-1]=(float) NODATA;
+	}
+	for(j=0; j < Image->nx; j++) {}
+		for(i=0; i < nk; i++) { 
+			Image->fimage[i][j]= (float) NODATA;Image->fimage[Image->ny-i-1][j]=(float) NODATA;
+		}
+	}
 	free( Image->image[0]);
 	/*
 	  Parse date and path/row from file name (may change means to get this information later 
@@ -744,11 +776,10 @@ void loadTiff(char *file,LSimage *Image,TIFF *tif,GTIF *gtif)
 /**************************** parseLSDate-parse LS filename to get date, path, row ***************************************
 
 *************************************** *************************************** ****************************************/
-static void parseLSDate(char *file,LSimage *Image)
+static void parseLSDate(char *file, LSimage *Image)
 {
 	int32 i,j, slash,idum,leadZero,path,row,year,doy,jd;
 	char tmp[1500],*tmp1;
-
 	i=0; 
 	slash=0;
         while(file[i] != '\0') {
@@ -794,11 +825,10 @@ static void parseLSDate(char *file,LSimage *Image)
 ************************************************************************************************************/
 static void mallocMatch(matchResult *matches) 
 {
-
 	float *buf;				   /* Pointer to malloced memory for correlation buffer */
 	uint8 *bufu;				   /* Pointer to malloced memory for correlation buffer */
 	size_t bufSize;		           /* Used to do buffer size math */
-	int width,widthO;
+	int32_t width,widthO;
 	uint32 i,j;				 /* LCV */
 	extern float **corr;
 	extern fftwf_complex *corrPatchSpace, *corrPatchFreq, *corrPatchOverFreq,*corrPatchOverSpace;
@@ -808,25 +838,28 @@ static void mallocMatch(matchResult *matches)
 	*/
 	widthO=NOVER*(OSSIZE*2);
 	width=OSSIZE*2;
-	corrPatchSpace=  	   fftwf_malloc ( sizeof ( fftwf_complex ) * width*width  );
-	corrPatchFreq=   	  fftwf_malloc ( sizeof ( fftwf_complex ) *  width*width   );
-	corrPatchOverSpace=  fftwf_malloc ( sizeof ( fftwf_complex ) *  widthO*widthO    );
-	corrPatchOverFreq   =  fftwf_malloc ( sizeof ( fftwf_complex ) *  widthO*widthO   );
+	corrPatchSpace= fftwf_malloc (sizeof(fftwf_complex) * width*width);
+	corrPatchFreq= fftwf_malloc (sizeof(fftwf_complex) * width*width);
+	corrPatchOverSpace= fftwf_malloc (sizeof(fftwf_complex) * widthO*widthO);
+	corrPatchOverFreq  =  fftwf_malloc (sizeof(fftwf_complex) *  widthO*widthO);
 	fprintf(stderr,"Start plan\n");
-	forwardCorrPlan=fftwf_plan_dft_2d(width,   width,    corrPatchSpace,     corrPatchFreq,            FFTW_FORWARD,  FFTW_ESTIMATE);
-	inverseCorrPlan= fftwf_plan_dft_2d(widthO,widthO, corrPatchOverFreq,corrPatchOverSpace,FFTW_BACKWARD,FFTW_ESTIMATE);
-	for(i=0; i < widthO; i++)  {for(j=0; j < widthO; j++) {corrPatchOverFreq[i*widthO+j][0]=0.0;corrPatchOverFreq[i*widthO+j][1]=0.0;  }}
-
+	forwardCorrPlan=fftwf_plan_dft_2d(width, width, corrPatchSpace, corrPatchFreq, FFTW_FORWARD, FFTW_ESTIMATE);
+	inverseCorrPlan= fftwf_plan_dft_2d(widthO, widthO, corrPatchOverFreq, corrPatchOverSpace, FFTW_BACKWARD, FFTW_ESTIMATE);
+	for(i=0; i < widthO; i++) {
+		for(j=0; j < widthO; j++) {
+			corrPatchOverFreq[i*widthO+j][0]=0.0;corrPatchOverFreq[i*widthO+j][1]=0.0;
+		}
+	}
 	fprintf(stderr,"End plan\n");
 	/*
 	  Malloc buffer for correlation - Note setting up to allow negative indices
 	*/
-	corr=lsmatrix(-MAXW,MAXW,-MAXW,MAXW );
+	corr = lsmatrix(-MAXW, MAXW, -MAXW, MAXW);
 	/*
 	  Malloc Output Buffers
 	*/
-	bufSize=sizeof(float *)*matches->ny;
-	fprintf(stderr,"bufSize %li\n",bufSize);
+	bufSize= sizeof(float *) * matches->ny;
+	fprintf(stderr,"bufSize %li\n", bufSize);
 	matches->X = (float **)malloc(bufSize);
 	matches->Y = (float **)malloc(bufSize);
 	matches->Rho = (float **)malloc(bufSize);
@@ -854,8 +887,6 @@ static void mallocMatch(matchResult *matches)
 }
 
 
-	
-
 /**************************** lsmatrix ******************************************************
 Malloc a floating point matrix - in this case mallocs the corr matrix to allow negative indices
 */
@@ -864,12 +895,10 @@ float **lsmatrix(int32 nrl, int32 nrh, int32 ncl, int32 nch)
 {
 	int32 i, nrow=nrh-nrl+1,ncol=nch-ncl+1;
 	float **m;
-
 	/* allocate pointers to rows */
 	m=(float **) malloc((size_t)((nrow)*sizeof(float*)));
 	if (!m) error("allocation failure 1 in matrix()");
 	m -= nrl;
-
 	/* allocate rows and set pointers to them */
 	m[nrl]=(float *) malloc((size_t)((nrow*ncol)*sizeof(float)));
 
@@ -881,10 +910,10 @@ float **lsmatrix(int32 nrl, int32 nrh, int32 ncl, int32 nch)
 	/* return pointer to array of pointers to rows */
 	return m;
 }
-static long julday(int mm, int id, int iyyy)
+static long julday(int32_t mm, int32_t id, int32_t iyyy)
 {
         long jul;
-        int ja,jy=iyyy,jm;
+        int32_t ja,jy=iyyy,jm;
 
         if (jy < 0) ++jy;
 
@@ -910,10 +939,7 @@ static void writeTiffAsRaw(LSimage *Image,char *file)
 {
 	uint32 i;
 	FILE *fp;
-
 	fp=fopen(file,"w");
 	/*      fwriteBS(Image->image[0],sizeof(uint16),(size_t)(Image->nx*Image->ny),fp,INT16FLAG); */
 	fwriteBS(Image->fimage[0],sizeof(float),(size_t)(Image->nx*Image->ny),fp,FLOAT32FLAG); 
 }
-
-
