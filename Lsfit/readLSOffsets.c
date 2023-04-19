@@ -9,17 +9,17 @@
 
 #define MAXTIEPOINTS 500000
 static void parseLSOffsetMeta(char *datFile,  lsFit *fitDat,matchResult *matches );
-float **LSreadFloatImage(char *file, int32 nx, int32 ny);
-uint8 **LSreadByteImage(char *file, int32 nx, int32 ny);
+float **LSreadFloatImage(char *file, int32_t nx, int32_t ny);
+uint8_t **LSreadByteImage(char *file, int32_t nx, int32_t ny);
 /*
   Read tiepoint file for tiepoints.
 */
 
-void readLSOffsets(lsFit *fitDat, matchResult *matches, int32 readData, char *maskFile)
+void readLSOffsets(lsFit *fitDat, matchResult *matches, int32_t readData, char *maskFile)
 {
 	char *offsetDatFile,*offXFile,*offYFile, *typeFile;
-	uint8 **mask;
-	int32 i,j;
+	uint8_t **mask;
+	int32_t i,j;
 	/*
 	  Parse Offset meta data
 	*/
@@ -81,11 +81,11 @@ void readLSOffsets(lsFit *fitDat, matchResult *matches, int32 readData, char *ma
 /***************************LSreadFloatImage*************************************
 input a floating point image file, with size nx by ny
 ***********************************************************************************/
-float **LSreadFloatImage(char *file, int32 nx, int32 ny)
+float **LSreadFloatImage(char *file, int32_t nx, int32_t ny)
 {
 	float **image;
 	float *tmp;	
-	int32 i,j;
+	int32_t i,j;
 	FILE *fp;
 	/* 
 	   open file
@@ -106,18 +106,18 @@ float **LSreadFloatImage(char *file, int32 nx, int32 ny)
 	return(image);
 }
 
-uint8 **LSreadByteImage(char *file, int32 nx, int32 ny)
+uint8_t **LSreadByteImage(char *file, int32_t nx, int32_t ny)
 {
-	uint8 **image;
-	uint8 *tmp;	
-	int32 i,j;
+	uint8_t **image;
+	uint8_t *tmp;	
+	int32_t i,j;
 	FILE *fp;
 	int ret; /* dummy return value to satisfy compiler */
 	/* 
 	   open file
 	*/
-	image=(uint8 **)malloc(sizeof(uint8 *)*ny);
-	tmp=(uint8 *)malloc(sizeof(uint8)*(size_t)nx*(size_t)ny);
+	image=(uint8_t **)malloc(sizeof(uint8_t *)*ny);
+	tmp=(uint8_t *)malloc(sizeof(uint8_t)*(size_t)nx*(size_t)ny);
 	for(i=0; i < ny; i++ ) image[i]=&(tmp[i*nx]);
 	/* 
 	   open file
@@ -126,7 +126,7 @@ uint8 **LSreadByteImage(char *file, int32 nx, int32 ny)
 	/* 
 	   read file
 	*/
-	for(i=0; i< ny; i++) { ret=fread(image[i],sizeof(uint8),(size_t)(nx),fp); 	 }
+	for(i=0; i< ny; i++) { ret=fread(image[i],sizeof(uint8_t),(size_t)(nx),fp); 	 }
 	fclose(fp);
 	return(image);
 }
@@ -134,11 +134,11 @@ uint8 **LSreadByteImage(char *file, int32 nx, int32 ny)
 
 static void parseLSOffsetMeta(char *datFile,  lsFit *fitDat,matchResult *matches )
 {
-	int32 notdone,idum,i;      /* Loop flag */
-	int32 linelength,lineCount;   /* Input line length */
+	int32_t notdone,idum,i;      /* Loop flag */
+	int32_t linelength,lineCount;   /* Input line length */
 	char *line;       /* Input line buffer */
 	char *keyword, *value;
-	uint32 udum;
+	uint32_t udum;
 	FILE *fp;
 	double fdum,fdum1,fdum2,fdum3;
 	keyword=(char *)malloc(sizeof(char)*LINEMAX+1);
@@ -219,7 +219,7 @@ static void parseLSOffsetMeta(char *datFile,  lsFit *fitDat,matchResult *matches
 void parseKeyValue(char *line,char *keyword,char *value)
 {
 	char *tmp,tmp1[LINEMAX];
-	uint32 i,j;
+	uint32_t i,j;
 	/*
 	  Process keyword
 	*/

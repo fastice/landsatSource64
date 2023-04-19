@@ -144,7 +144,7 @@ void computeLSFit(lsFit *fitDat, matchResult *matches, lsTiepoints *tiePoints)
 		/*
 		  Toss outliers and set up do do over
 		*/
-		nRejectForFit+ = nReject; 
+		nRejectForFit += nReject; 
 		tieCountForFit = tiePoints->npts; /* save for output stats, so as not to count the last iteration */
 		nReject = 0;
 		fprintf(stderr,"%f %f %f %f\n",meanX, meanY, sigmaX, sigmaY);

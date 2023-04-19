@@ -11,7 +11,7 @@ static void writeLSOffsets(matchResult *matches, matchParams *matchP);
 matchResult runLStrack(char *earlyFile, char *lateFile, matchParams *matchP );
 static void readLSMaskFile(matchParams *matchP);
 static void readVelMosaic(matchParams *matchP);
-int32 nMatch, nAttempt, nTotal;
+int32_t nMatch, nAttempt, nTotal;
 
 int main(int argc, char *argv[])
 {   
@@ -65,12 +65,12 @@ int main(int argc, char *argv[])
 ****************************************************************************************************/
 static void writeLSOffsets(matchResult *matches, matchParams *matchP)
 {
-	uint32 i;
+	uint32_t i;
 	FILE *fp;
 	float successRate;
 	char *file1;
 	size_t  sl;
-	extern int32 nMatch, nAttempt, nTotal;
+	extern int32_t nMatch, nAttempt, nTotal;
 	sl = 1500; 
 	file1=(char *)malloc(sl); 
 
@@ -104,7 +104,7 @@ static void writeLSOffsets(matchResult *matches, matchParams *matchP)
 	file1=strcpy(file1,matchP->outputFile); 
 	file1=strcat(file1,".mtype"); fprintf(stderr,"%s\n",file1);
 	fp=fopen(file1,"w");  
-	fwrite(matches->type[0], sizeof(uint8), (size_t)(matches->nx*matches->ny), fp); 
+	fwrite(matches->type[0], sizeof(uint8_t), (size_t)(matches->nx*matches->ny), fp); 
 	fclose(fp);
 
 	for(i=0; i<sl; i++) file1[i]='\0'; 
@@ -297,7 +297,7 @@ static void readLSMaskFile(matchParams *matchP)
  
 static void readArgs(int argc, char *argv[], char **earlyFile, char **lateFile, matchParams *matchP)
 {
-	int32 n,i,idum;
+	int32_t n,i,idum;
 	char *argString;
 
 	matchP->chipSize=33;
