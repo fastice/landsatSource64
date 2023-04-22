@@ -231,8 +231,6 @@ extern void *SwapEndian(void* Addr, const int32_t Nb);
    }
   /*------------------------------end i386----------------------------------------*/
 #else 
-#ifdef x86_64
-
   /*
     ++++++++++++++++++++++++++++++start i386++++++++++++++++++++++++++++++++++++++++
   */
@@ -265,21 +263,8 @@ extern void *SwapEndian(void* Addr, const int32_t Nb);
       return(retVal);
    }
   /*------------------------------end i386----------------------------------------*/
-#else
-#ifdef powerpc
-  /*++++++++++++++++++++++++++++++start powerpc++++++++++++++++++++++++++++++++++++++++*/
-  /* This essentially is does nothing since no byteswapping required */  
-   return(retVal);
-/*------------------------------end powerpc---------------------------------------- */
-
-#else 
-  /*++++++++++++++++++++++++++++++start powerpc++++++++++++++++++++++++++++++++++++++++ */
-   error("Invalid processor type; compiled with no processor specifications \n");
-/*------------------------------end powerpc----------------------------------------*/
-
+#
 #endif 
-#endif
-#endif
 return 0;
 }
 /*
@@ -319,7 +304,7 @@ return 0;
 
   /*------------------------------end i386----------------------------------------*/
 #else 
-#ifdef  x86_64
+/*#ifdef  x86_64*/
  /*
     Float 32 data
  */
@@ -342,19 +327,7 @@ return 0;
    }
 
    /*------------------------------end i386 -----------*/
-#else
-#ifdef powerpc
-/*++++++++++++++++++++++++++++++start powerpc++++++++++++++++++++++++++++++++++++++++*/
-  /* This essentially is does nothing since no byteswapping required */  
-/*------------------------------end powerpc---------------------------------------- */
-#else 
-/*++++++++++++++++++++++++++++++start powerpc++++++++++++++++++++++++++++++++++++++++ */
-   error("Invalid processor type; compiled with no processor specifications \n");
-/*------------------------------end powerpc----------------------------------------*/
-
 #endif 
-#endif
-#endif
    retVal=fwrite(ptr,nitems,size,fp);
 
 #ifdef i386 
@@ -362,9 +335,7 @@ return 0;
    if(flags==FLOAT32FLAG) for(i=0; i < n; i++) ptrLong[i]=SWAP_ULONG(ptrLong[i]);
    if(flags==INT32FLAG)   for(i=0; i < n; i++) ptrLong[i]=SWAP_ULONG(ptrLong[i]);
    if(flags==INT16FLAG)   for(i=0; i < n; i++) ptr16[i]=SWAP_USHORT(ptr16[i]);
-#endif
-
-#ifdef x86_64
+#else
    /* Swap back */
    if(flags==FLOAT32FLAG) for(i=0; i < n; i++) ptrLong[i]=SWAP_ULONG(ptrLong[i]);
    if(flags==INT32FLAG)   for(i=0; i < n; i++) ptrLong[i]=SWAP_ULONG(ptrLong[i]);
