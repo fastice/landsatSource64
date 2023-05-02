@@ -201,129 +201,129 @@ matchResult runLStrack(char *earlyFile, char *lateFile, matchParams *matchP)
 	else
 	{
 		matches.ny = min(nY, matches.ny);
+	}
 
-		fprintf(stderr, "%lf %lf %lf %lf \n \n", minX, maxX, minY, maxY);
-		fprintf(stderr, "nX,nY %lf %lf  nx,ny %i %i	\n", nX, nY, matchP->nx, matchP->ny);
-		fprintf(stderr, "%f %f\n", (maxX - matches.x0), ((maxX - matches.x0) / earlyImage.dx));
-		fprintf(stderr, "match start %lf %lf number of matches in x/y %i %i %i %i\n", matches.x0, matches.y0, matches.nx, matches.ny, matchP->stepX, matchP->stepY);
-		/*
-		   Do final mallocs
-		*/
-		mallocMatch(&matches);
-		/* debug fpDebug=fopen("testcorr","w"); fpDebug1=fopen("testcorr1","w");  fpDebug2=fopen("testcorr2","w"); end debug */
-		/*
-		   Loop do correlation (i,j) index match output
-		*/
-		ie = (uint32_t)((matches.y0 - earlyImage.y0) / earlyImage.dy + 0.5);
-		for (im = 0; im < matches.ny; im++)
+	fprintf(stderr, "%lf %lf %lf %lf \n \n", minX, maxX, minY, maxY);
+	fprintf(stderr, "nX,nY %lf %lf  nx,ny %i %i	\n", nX, nY, matchP->nx, matchP->ny);
+	fprintf(stderr, "%f %f\n", (maxX - matches.x0), ((maxX - matches.x0) / earlyImage.dx));
+	fprintf(stderr, "match start %lf %lf number of matches in x/y %i %i %i %i\n", matches.x0, matches.y0, matches.nx, matches.ny, matchP->stepX, matchP->stepY);
+	/*
+	   Do final mallocs
+	*/
+	mallocMatch(&matches);
+	/* debug fpDebug=fopen("testcorr","w"); fpDebug1=fopen("testcorr1","w");  fpDebug2=fopen("testcorr2","w"); end debug */
+	/*
+	   Loop do correlation (i,j) index match output
+	*/
+	ie = (uint32_t)((matches.y0 - earlyImage.y0) / earlyImage.dy + 0.5);
+	for (im = 0; im < matches.ny; im++)
+	{
+		je = (uint32_t)((matches.x0 - earlyImage.x0) / earlyImage.dx + 0.5); /* Compute first pixel - note j=x, i=y, always index i,j */
+		y = earlyImage.y0 + ie * earlyImage.dy;
+		for (jm = 0; jm < matches.nx; jm++)
 		{
-			je = (uint32_t)((matches.x0 - earlyImage.x0) / earlyImage.dx + 0.5); /* Compute first pixel - note j=x, i=y, always index i,j */
-			y = earlyImage.y0 + ie * earlyImage.dy;
-			for (jm = 0; jm < matches.nx; jm++)
+			matches.Rho[im][jm] = -1.0;
+			matches.X[im][jm] = NODATA;
+			matches.Y[im][jm] = NODATA;
+			matches.type[im][jm] = 0;
+			nTotal++;
+			x = earlyImage.x0 + je * earlyImage.dx;
+			slow = 0;
+			/*
+			  Is masked?
+			*/
+			if (isMasked(x, y, matchP) == TRUE)
 			{
-				matches.Rho[im][jm] = -1.0;
-				matches.X[im][jm] = NODATA;
-				matches.Y[im][jm] = NODATA;
-				matches.type[im][jm] = 0;
-				nTotal++;
-				x = earlyImage.x0 + je * earlyImage.dx;
-				slow = 0;
-				/*
-				  Is masked?
-				*/
-				if (isMasked(x, y, matchP) == TRUE)
-				{
-					matches.type[im][jm] |= ISMASKED;
-					goto skipmatch;
-				}
-				/*
-				  Get postion in late image. Skip if not found
-				*/
-				if (getLatePosition(&earlyImage, &lateImage, matchP, ie, je, &il, &jl, &chipSize, &lx1, &lx2, &ly1, &ly2) < 0)
-				{
-					matches.type[im][jm] |= NODATATOUSE;
-					goto skipmatch;
-				}
-				/*
-				   velocity guess
-				*/
-				guessReturn = velGuess(x, y, matchP, earlyImage.dx, earlyImage.dy, &iVel, &jVel, &slow, &highStrain);
+				matches.type[im][jm] |= ISMASKED;
+				goto skipmatch;
+			}
+			/*
+			  Get postion in late image. Skip if not found
+			*/
+			if (getLatePosition(&earlyImage, &lateImage, matchP, ie, je, &il, &jl, &chipSize, &lx1, &lx2, &ly1, &ly2) < 0)
+			{
+				matches.type[im][jm] |= NODATATOUSE;
+				goto skipmatch;
+			}
+			/*
+			   velocity guess
+			*/
+			guessReturn = velGuess(x, y, matchP, earlyImage.dx, earlyImage.dy, &iVel, &jVel, &slow, &highStrain);
 
-				il += iVel;
-				jl += jVel;
-				if (highStrain == TRUE)
-					matches.type[im][jm] |= HIGHSTRAIN;
-				if (slow > 0)
-				{ /* Slow area with little variation, so increase chip and reduce search */
-					if (slow == 1)
-					{
-						chipSize *= 1.5;
-						if (chipSize % 2 == 0)
-							chipSize++;
-						lx1 = -MINSEARCH;
-						ly1 = -MINSEARCH;
-						lx2 = MINSEARCH;
-						ly2 = MINSEARCH;
-						matches.type[im][jm] |= SLOWVEL;
-						countS++;
-					}
-					else
-					{
-						/* This is a bit of an afterthought, and it allows mid-ranage speeds (100,1000) to use a smaller chip size */
-						lx1 = -MINSEARCH * 2;
-						ly1 = -MINSEARCH * 2;
-						lx2 = MINSEARCH * 2;
-						ly2 = MINSEARCH * 2;
-						matches.type[im][jm] |= FASTVEL;
-						countM++;
-					}
+			il += iVel;
+			jl += jVel;
+			if (highStrain == TRUE)
+				matches.type[im][jm] |= HIGHSTRAIN;
+			if (slow > 0)
+			{ /* Slow area with little variation, so increase chip and reduce search */
+				if (slow == 1)
+				{
+					chipSize *= 1.5;
+					if (chipSize % 2 == 0)
+						chipSize++;
+					lx1 = -MINSEARCH;
+					ly1 = -MINSEARCH;
+					lx2 = MINSEARCH;
+					ly2 = MINSEARCH;
+					matches.type[im][jm] |= SLOWVEL;
+					countS++;
 				}
 				else
 				{
+					/* This is a bit of an afterthought, and it allows mid-ranage speeds (100,1000) to use a smaller chip size */
+					lx1 = -MINSEARCH * 2;
+					ly1 = -MINSEARCH * 2;
+					lx2 = MINSEARCH * 2;
+					ly2 = MINSEARCH * 2;
 					matches.type[im][jm] |= FASTVEL;
-					countF++;
+					countM++;
 				}
-				/*
-				  Run correlator.
-				*/
-				/*fprintf(stderr,"%i %i -- %i %i --- %i %i %i %i\n",ie,je,il,jl,lx1,lx2,ly1,ly2);*/
-				pixelCorr = fastCorr(&earlyImage, &lateImage, chipSize, ie, je, il, jl, lx1, lx2, ly1, ly2, &offX, &offY);
-				if (pixelCorr > NOUSEABLEDATA)
-				{
-					nAttempt++;
-				} /*  means no correlation tried because there was no data to correlate */
-				if (pixelCorr == NOCORR)
-				{
-					matches.type[im][jm] |= LOWCORR;
-					goto skipmatch;
-				}
-				if (pixelCorr == NOUSEABLEDATA)
-				{
-					matches.type[im][jm] |= NODATATOUSE;
-					goto skipmatch;
-				}
-				/*	fprintf(stderr,"%li %li %li %li\n",ie,je,il,jl);*/
-				matches.X[im][jm] = offX + (float)jVel;
-				matches.Y[im][jm] = offY + (float)iVel;
-				matches.Rho[im][jm] = pixelCorr;
-				nMatch++;
-			skipmatch:
-				je += matchP->stepX;
 			}
-			ie += matchP->stepY;
-			if (im % 20 == 0 && im > 1)
+			else
 			{
-				fprintf(stderr, "%i %i %i %i %i %i %% Match %8.1f %% nMatch %i nAttempt %i nPts %i  ", ie, je, im, jm, ly1, ly2, ((float)nMatch / (float)max(nAttempt, 1)) * 100, nMatch, nAttempt, nTotal);
-				fprintf(stderr, "Time for this batch %8.1f (s) Total Elapsed  %8.2f  (m)\n",
-						(float)(time(NULL) - currTime), (float)(time(NULL) - startTime) / 60.);
-				currTime = time(NULL);
+				matches.type[im][jm] |= FASTVEL;
+				countF++;
 			}
+			/*
+			  Run correlator.
+			*/
+			/*fprintf(stderr,"%i %i -- %i %i --- %i %i %i %i\n",ie,je,il,jl,lx1,lx2,ly1,ly2);*/
+			pixelCorr = fastCorr(&earlyImage, &lateImage, chipSize, ie, je, il, jl, lx1, lx2, ly1, ly2, &offX, &offY);
+			if (pixelCorr > NOUSEABLEDATA)
+			{
+				nAttempt++;
+			} /*  means no correlation tried because there was no data to correlate */
+			if (pixelCorr == NOCORR)
+			{
+				matches.type[im][jm] |= LOWCORR;
+				goto skipmatch;
+			}
+			if (pixelCorr == NOUSEABLEDATA)
+			{
+				matches.type[im][jm] |= NODATATOUSE;
+				goto skipmatch;
+			}
+			/*	fprintf(stderr,"%li %li %li %li\n",ie,je,il,jl);*/
+			matches.X[im][jm] = offX + (float)jVel;
+			matches.Y[im][jm] = offY + (float)iVel;
+			matches.Rho[im][jm] = pixelCorr;
+			nMatch++;
+		skipmatch:
+			je += matchP->stepX;
 		}
-		/*	writeTiffAsRaw(&earlyImage,"test1");
-			writeTiffAsRaw(&lateImage,"test2");*/
-		fprintf(stderr, "count Slow,Med,Fast  %i %i %i\n", countS, countM, countF);
-		return (matches);
+		ie += matchP->stepY;
+		if (im % 20 == 0 && im > 1)
+		{
+			fprintf(stderr, "%i %i %i %i %i %i %% Match %8.1f %% nMatch %i nAttempt %i nPts %i  ", ie, je, im, jm, ly1, ly2, ((float)nMatch / (float)max(nAttempt, 1)) * 100, nMatch, nAttempt, nTotal);
+			fprintf(stderr, "Time for this batch %8.1f (s) Total Elapsed  %8.2f  (m)\n",
+					(float)(time(NULL) - currTime), (float)(time(NULL) - startTime) / 60.);
+			currTime = time(NULL);
+		}
 	}
+	/*	writeTiffAsRaw(&earlyImage,"test1");
+		writeTiffAsRaw(&lateImage,"test2");*/
+	fprintf(stderr, "count Slow,Med,Fast  %i %i %i\n", countS, countM, countF);
+	return (matches);
 }
 
 /******************************* velGuess  ***************************************
