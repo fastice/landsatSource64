@@ -15,6 +15,7 @@ int32_t nMatch, nAttempt, nTotal;
 
 int main(int argc, char *argv[])
 {
+// declare variables
 	char *parFile;
 	int32_t noComplex;
 	int32_t floatFlag;
