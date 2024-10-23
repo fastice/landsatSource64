@@ -91,11 +91,14 @@ void computeLSFit(lsFit *fitDat, matchResult *matches, lsTiepoints *tiePoints)
 		xyOrig[i].y = tiePoints->y[i - 1] * MTOKM - (matches->y0 + 0.5 * matches->ny * matches->stepY * matches->dy) * MTOKM;
 	}
 	notDone = TRUE;
-	nIterations = 0; nRejectForFit = 0; nReject = 0;
+	nIterations = 0;
+	nRejectForFit = 0;
+	nReject = 0;
 	// Loop to do fits
-	while (notDone == TRUE )
-	{	// Require at least 10 tiepoints
-		if(tiePoints->npts <= 3) error("No solution, only %i tiepoints (must be > 4)\n", tiePoints->npts);
+	while (notDone == TRUE)
+	{ // Require at least 10 tiepoints
+		if (tiePoints->npts <= 3)
+			error("No solution, only %i tiepoints (must be > 4)\n", tiePoints->npts);
 		// Compute width
 		computePointsWidth(xy, tiePoints->npts, &xWidth, &yWidth);
 		//	Setup fit.
@@ -139,29 +142,31 @@ void computeLSFit(lsFit *fitDat, matchResult *matches, lsTiepoints *tiePoints)
 		// Evaluate fit
 		computeStats(fitDat, matches, xy, dx, dy, aX, aY,
 					 &meanX, &meanY, &sigmaX, &sigmaY, &varX, &varY, tiePoints->npts, ma);
-		fprintf(stderr, "nOrig %i nRject %i nReject total %i\n ",nptsOrig, nReject, nRejectForFit);
+		fprintf(stderr, "nOrig %i nRject %i nReject total %i\n ", nptsOrig, nReject, nRejectForFit);
 		fprintf(stderr, "Intermediate Res mean %f %f sigma %f %f\n\n", meanX, meanY, sigmaX, sigmaY);
 		// Discard outliers and setup to redo if needed
 		discardOutliers(fitDat, matches, tiePoints, xy, dx, dy, aX, aY, sigmaX, sigmaY, &nReject, ma);
 		nIterations++;
 		//
 		// Quit if no more rejects or max iterations reached
-		if (nReject == 0 ||  nIterations >= MAXTIEITERATIONS) 
+		if (nReject == 0 || nIterations >= MAXTIEITERATIONS)
 		{
 			notDone = FALSE;
-			break;  
-		}	
+			break;
+		}
 		// Use residual sigmas, after scaling back to pixels for error estimate
 		for (i = 1; i <= tiePoints->npts; i++)
-		{ 	
+		{
 			// fprintf(stderr, "%f %f\n", dx[i], dy[i]);
 			sigX[i] = sigmaX / (365.25 * matches->dx) * fitDat->deltaT;
 			sigY[i] = sigmaY / (365.25 * matches->dy) * fitDat->deltaT;
 		}
 	} // Finished iterating
 	//
-	// Went with culled stats 07/22/2024
-	fprintf(stderr, "tiePoints->nPts %i nReject %i\n", tiePoints->npts, nRejectForFit);
+	// Use non culled stats for error estimate (note will improve after masking)
+	computeStats(fitDat, matches, xyOrig, dxOrig, dyOrig, aX, aY,
+					 &meanX, &meanY, &sigmaX, &sigmaY, &varX, &varY, nptsOrig, ma);
+	fprintf(stderr, "tiePoints->nPts %i nReject %i\n", tieCountForFit, nRejectForFit);
 	fprintf(stderr, "Final Res mean %f %f sigmax %f %f\n", meanX, meanY, sigmaX, sigmaY);
 	/*
 	  write results
@@ -173,7 +178,7 @@ void computeLSFit(lsFit *fitDat, matchResult *matches, lsTiepoints *tiePoints)
 static void computeStats(lsFit *fitDat, matchResult *matches,
 						 svdData *xy, double *dx, double *dy, double *aX, double *aY,
 						 double *meanX, double *meanY, double *sigmaX, double *sigmaY, double *varX, double *varY,
-						 int32_t nPts, int32_t ma) 
+						 int32_t nPts, int32_t ma)
 {
 	double px1, px2, px3, py1, py2, py3;
 	double resX, resY;
@@ -203,7 +208,6 @@ static void computeStats(lsFit *fitDat, matchResult *matches,
 	*sigmaY = sqrt(*varY - *meanY * *meanY);
 }
 
-
 //	Ad hoc metric to make sure points cover a wide enough area for the fit
 static void computePointsWidth(svdData *xy, int32_t nPts, double *xWidth, double *yWidth)
 {
@@ -230,7 +234,6 @@ static void computePointsWidth(svdData *xy, int32_t nPts, double *xWidth, double
 		*yWidth = max(*yWidth, fabs(xy[i].y - meanY));
 	}
 }
-
 
 static void discardOutliers(lsFit *fitDat, matchResult *matches, lsTiepoints *tiePoints,
 							svdData *xy, double *dx, double *dy, double *aX, double *aY,
@@ -331,7 +334,7 @@ static void printFitResult(lsFit *fitDat, double *aX, double *aY, double **Cmatr
 	else if (fitDat->fitType == CONSTANTFIT)
 		fprintf(fpOut, "; Fit type used, constant \n");
 	fprintf(fpOut, "; n rejected for fit, and n would reject on next iteration, percent rejected \n");
-	fprintf(fpOut, "N_ties_rejected =  %i %i %i \n", nRejectForFit, nReject,
+	fprintf(fpOut, "N_ties_rejected =  %i %i %i\n", nRejectForFit, nReject,
 			(int32_t)(100.0 * (double)nRejectForFit / (double)(nptsOrig)));
 	fprintf(fpOut, ";  Number of ties used in fit\n");
 	fprintf(fpOut, "N_ties_used =  %i \n", tieCountForFit);
