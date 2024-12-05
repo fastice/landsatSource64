@@ -4,7 +4,7 @@ CFLAGS =	$(FLAGS) -D$(MACHTYPE) -c -I$(INCLUDEPATH)
 OBJS =	standard.o
 
 MACHTYPE = $(shell uname -m)
-OSTYPE = $(shelf uname -s)
+OSTYPE = $(shell uname -s)
 
 $(shell mkdir -p $(MACHTYPE)-$(OSTYPE))
 
