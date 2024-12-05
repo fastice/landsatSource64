@@ -1,9 +1,12 @@
 CC =		gcc
 CFLAGS =	$(FLAGS) -D$(MACHTYPE) -c -I$(INCLUDEPATH)
 
-$(shell mkdir -p $(MACHTYPE)-$(OSTYPE))
-
 OBJS =	standard.o
+
+MACHTYPE = $(shell uname -m)
+OSTYPE = $(shelf uname -s)
+
+$(shell mkdir -p $(MACHTYPE)-$(OSTYPE))
 
 all:	$(OBJS)
 	mv *.o $(MACHTYPE)-$(OSTYPE)
