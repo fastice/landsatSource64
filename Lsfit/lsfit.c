@@ -9,6 +9,7 @@
 #include "unistd.h"
 
 static void readArgs(int argc, char *argv[], lsFit *fitDat, char **maskFile);
+static void dataWidth(matchResult *matches);
 static void LSFitusage();
 int32_t nMatch, nAttempt, nTotal;
 int main(int argc, char *argv[])
@@ -18,6 +19,7 @@ int main(int argc, char *argv[])
 	matchParams matchP;
 	matchResult matches;
 	lsTiepoints tiePoints;
+	double xImageWidth, yImageWidth;
 	lsFit fitDat;
 	char *maskFile;
 	/*
@@ -33,6 +35,8 @@ int main(int argc, char *argv[])
 	*/
 	fprintf(stderr, "Reading Offsets \n");
 	readLSOffsets(&fitDat, &matches, TRUE, maskFile);
+	// Compute Nominal Width
+	dataWidth(&matches);
 	/*
 		Read Tie points
 	*/
@@ -48,6 +52,30 @@ int main(int argc, char *argv[])
 	*/
 	computeLSFit(&fitDat, &matches, &tiePoints);
 }
+
+// Compute max width of the data in the x and y directions.
+static void dataWidth(matchResult *matches)	
+{
+	int minj=2000000, maxj=0, mini=2000000, maxi=0;
+	for(int i=0; i < matches->ny; i++)
+	{
+		for(int j=0; j < matches->nx; j++)
+		{
+			if(matches->X[i][j] > (NODATA + 1))
+			{
+				mini = min(i, mini);
+				maxi = max(i, maxi);
+				minj = min(j, minj);
+				maxj = max(j, maxj);
+			}
+		}
+	}
+	fprintf(stderr, "min/max i, j %i %i, %i, %i\n", mini, maxi, minj, maxj);
+	matches->yDataWidth = (maxi - mini + 1) * matches->dx * (double)matches->stepX * MTOKM;
+	matches->xDataWidth = (maxj - minj + 1) * matches->dy * (double)matches->stepY * MTOKM;
+	fprintf(stderr, "data X/Y width %lf %lf\n", matches->xDataWidth, matches->yDataWidth);
+}
+
 
 static void readArgs(int argc, char *argv[], lsFit *fitDat, char **maskFile)
 {

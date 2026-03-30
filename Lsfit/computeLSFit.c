@@ -12,6 +12,7 @@
 #define MAXTIEPOINTS 500000
 #define REJECTTHRESHOLD 100 // Increased from 50 to 100 7/25/2024
 #define MAXTIEITERATIONS 3
+#define NORMWIDTHTHRESH 0.4
 
 typedef struct
 {
@@ -39,6 +40,8 @@ static void printFitResult(lsFit *fitDat, double *aX, double *aY, double **Cmatr
 /*
   Read tiepoint file for tiepoints.
 */
+
+
 void computeLSFit(lsFit *fitDat, matchResult *matches, lsTiepoints *tiePoints)
 {
 	void (*fitFunction)(void *, int i, double *, int);
@@ -54,7 +57,7 @@ void computeLSFit(lsFit *fitDat, matchResult *matches, lsTiepoints *tiePoints)
 	int32_t nIterations, notDone; /* Used to control iterations loop */
 	int32_t nReject, nRejectForFit, tieCountForFit;
 	int32_t i, j;
-
+	double xWidthNorm, yWidthNorm;
 	/*
 	   Init arrays for LS fit
 	*/
@@ -101,12 +104,15 @@ void computeLSFit(lsFit *fitDat, matchResult *matches, lsTiepoints *tiePoints)
 			error("No solution, only %i tiepoints (must be > 4)\n", tiePoints->npts);
 		// Compute width
 		computePointsWidth(xy, tiePoints->npts, &xWidth, &yWidth);
+		xWidthNorm = xWidth / matches->xDataWidth;
+		yWidthNorm = yWidth / matches->yDataWidth;
+		fprintf(stderr, "xy norm widths %lf %lf %lf %lf %lf %lf\n", xWidthNorm, yWidthNorm, xWidth, yWidth, matches->xDataWidth, matches->yDataWidth);
 		//	Setup fit.
 		//	Added 07/18/24
 		//	Downshift to constant fit if data don't support plane fit and
 		//	moved inside loop to track points as they are culled.
 		fprintf(stderr, "**** xWidth, yWidth %f %f\n", xWidth, yWidth);
-		if (tiePoints->npts < 30 || xWidth < 75 || yWidth < 75)
+		if (tiePoints->npts < 10 || xWidth < NORMWIDTHTHRESH || yWidth < NORMWIDTHTHRESH)
 		{
 			fitDat->fitType = CONSTANTFIT;
 			ma = 1;
@@ -214,15 +220,16 @@ static void computePointsWidth(svdData *xy, int32_t nPts, double *xWidth, double
 
 	int32_t i;
 	double meanX, meanY;
+	double xMin=1e30, xMax=-1e30, yMin=1e30, yMax=-1e30;
 	// Compute mean
-
-	meanX = 0.0;
-	meanY = 0.0;
 	for (i = 1; i <= nPts; i++)
 	{
-		meanX += xy[i].x;
-		meanY += xy[i].y;
+		xMin = min(xy[i].x, xMin);
+		xMax = max(xy[i].x, xMax);
+		yMin = min(xy[i].y, yMin);
+		yMax = max(xy[i].y, yMax);
 	}
+	/*
 	meanX = meanX / nPts;
 	meanY = meanY / nPts;
 	// Determine max distance from center
@@ -233,6 +240,10 @@ static void computePointsWidth(svdData *xy, int32_t nPts, double *xWidth, double
 		*xWidth = max(*xWidth, fabs(xy[i].x - meanX));
 		*yWidth = max(*yWidth, fabs(xy[i].y - meanY));
 	}
+	*/
+	// Computed half width, so double to get full extent
+	*xWidth = xMax - xMin;
+	*yWidth = yMax - yMin;
 }
 
 static void discardOutliers(lsFit *fitDat, matchResult *matches, lsTiepoints *tiePoints,

@@ -103,6 +103,8 @@ typedef struct {
 	char *fileLate; 
 	double jdEarly;
 	double jdLate;
+	double xDataWidth; // Used for fitting.
+	double yDataWidth;
 	uint32_t nx;
 	uint32_t ny;
 	double x0;
